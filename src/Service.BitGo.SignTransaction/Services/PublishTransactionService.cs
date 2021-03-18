@@ -25,8 +25,15 @@ namespace Service.BitGo.SignTransaction.Services
             {
                 _logger.LogInformation("Transfer Request: {jsonText}", JsonConvert.SerializeObject(request));
 
+                var pass = Program.Settings.GetPassphraseByWalletId(request.BitgoWalletId);
+
+                if (string.IsNullOrEmpty(pass))
+                {
+                    _logger.LogError("Cannot find pass phase for wallet {bitgoWalletIdText}", request.BitgoWalletId);
+                }
+
                 var result = await _bitGoClient.SendCoinsAsync(request.BitgoCoin, request.BitgoWalletId,
-                    Program.Settings.GetPassphraseByWalletId(request.BitgoWalletId), request.SequenceId,
+                    pass, request.SequenceId,
                     request.Amount, request.Address);
 
                 if (!result.Success)
@@ -46,7 +53,7 @@ namespace Service.BitGo.SignTransaction.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Transfer Request: {jsonText}. Error: {message}", JsonConvert.SerializeObject(request), ex.Message);
+                _logger.LogError(ex, "Transfer Request ERROR: {jsonText}. Error: {message}", JsonConvert.SerializeObject(request), ex.Message);
                 throw;
             }
         }

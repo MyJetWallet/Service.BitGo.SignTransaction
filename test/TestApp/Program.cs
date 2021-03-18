@@ -17,7 +17,9 @@ namespace TestApp
             Console.ReadLine();
 
 
-            var factory = new BitGoSignTransactionClientFactory("http://localhost:82");
+            //var factory = new BitGoSignTransactionClientFactory("http://localhost:82");
+            var factory = new BitGoSignTransactionClientFactory("http://bitgo-sign-transaction.services.svc.cluster.local:80");
+            
             var client = factory.GetPublishTransactionService();
 
             var resp = await client.SignAndSendTransactionAsync(new SendTransactionRequest()
