@@ -17,21 +17,37 @@ namespace TestApp
             Console.ReadLine();
 
 
-            //var factory = new BitGoSignTransactionClientFactory("http://localhost:82");
-            var factory = new BitGoSignTransactionClientFactory("http://bitgo-sign-transaction.services.svc.cluster.local:80");
+            var factory = new BitGoSignTransactionClientFactory("http://localhost:82");
+            //var factory = new BitGoSignTransactionClientFactory("http://bitgo-sign-transaction.services.svc.cluster.local:80");
             
             var client = factory.GetPublishTransactionService();
 
-            var resp = await client.SignAndSendTransactionAsync(new SendTransactionRequest()
+            var request = new SendTransactionRequest()
             {
                 BitgoWalletId = "6013e7b3d11c3704c6b47cf6191e74a8",
                 BitgoCoin = "tbtc",
                 Address = "2N3Y2Ev1N9UuVa6GBYzTpJRxEgjujV7dBcR",
                 SequenceId = Guid.NewGuid().ToString("N"),
-                Amount = "3000"
-            });
+                Amount = "12000"
+            };
 
-            Console.WriteLine(JsonConvert.SerializeObject(resp));
+            var cmd = "";
+            while (cmd != "exit")
+            {
+                try
+                {
+                    var resp = await client.SignAndSendTransactionAsync(request);
+                    Console.WriteLine(JsonConvert.SerializeObject(resp));
+
+                }catch(Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+
+                cmd = Console.ReadLine();
+
+            }
+            
 
             Console.WriteLine("End");
             Console.ReadLine();
