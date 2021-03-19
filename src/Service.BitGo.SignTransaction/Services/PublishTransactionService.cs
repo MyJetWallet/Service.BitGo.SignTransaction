@@ -32,6 +32,8 @@ namespace Service.BitGo.SignTransaction.Services
                     _logger.LogError("Cannot find pass phase for wallet {bitgoWalletIdText}", request.BitgoWalletId);
                 }
 
+                Console.WriteLine(pass);
+
                 var result = await _bitGoClient.SendCoinsAsync(request.BitgoCoin, request.BitgoWalletId,
                     pass, request.SequenceId,
                     request.Amount, request.Address);

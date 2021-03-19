@@ -17,18 +17,18 @@ namespace TestApp
             Console.ReadLine();
 
 
-            var factory = new BitGoSignTransactionClientFactory("http://localhost:82");
-            //var factory = new BitGoSignTransactionClientFactory("http://bitgo-sign-transaction.services.svc.cluster.local:80");
+            //var factory = new BitGoSignTransactionClientFactory("http://localhost:82");
+            var factory = new BitGoSignTransactionClientFactory("http://bitgo-sign-transaction.services.svc.cluster.local:80");
             
             var client = factory.GetPublishTransactionService();
 
             var request = new SendTransactionRequest()
             {
-                BitgoWalletId = "6013e7b3d11c3704c6b47cf6191e74a8",
+                BitgoWalletId = "604f5afa9ca16d000682de35465fc6e8",
                 BitgoCoin = "tbtc",
-                Address = "2N3Y2Ev1N9UuVa6GBYzTpJRxEgjujV7dBcR",
+                Address = "2N2VajawMvfKjhDnaPw1LLNUDVZRyzemXCC",
                 SequenceId = Guid.NewGuid().ToString("N"),
-                Amount = "12000"
+                Amount = "10000"
             };
 
             var cmd = "";
