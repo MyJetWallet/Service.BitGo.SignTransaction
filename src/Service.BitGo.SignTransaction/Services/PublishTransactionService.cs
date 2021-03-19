@@ -36,9 +36,32 @@ namespace Service.BitGo.SignTransaction.Services
                     pass, request.SequenceId,
                     request.Amount, request.Address);
 
+                
+                if (!result.Success && result.Error.Code == "DuplicateSequenceIdError")
+                {
+                    var transaction = await _bitGoClient.GetTransferBySequenceIdAsync(request.BitgoCoin, request.BitgoWalletId, request.SequenceId);
+                    
+                    if (!transaction.Success || transaction.Data == null)
+                    {
+                        _logger.LogError("Transfer is Duplicate, but cannot found transaction: {jsonText}", JsonConvert.SerializeObject(transaction.Error));
+
+                        return new SendTransactionResponse()
+                        {
+                            Error = result.Error
+                        };
+                    }
+
+                    _logger.LogInformation("Transfer is Duplicate, Result: {jsonText}", JsonConvert.SerializeObject(transaction.Data));
+
+                    return new SendTransactionResponse()
+                    {
+                        DuplicateTransaction = transaction.Data
+                    };
+                }
+                
                 if (!result.Success)
                 {
-                    _logger.LogError("Transfer Result: {jsonText}", JsonConvert.SerializeObject(result.Data));
+                    _logger.LogError("Transfer Result: {jsonText}", JsonConvert.SerializeObject(result.Error));
                     return new SendTransactionResponse()
                     {
                         Error = result.Error
