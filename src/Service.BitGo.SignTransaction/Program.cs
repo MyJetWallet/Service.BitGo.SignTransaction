@@ -65,7 +65,9 @@ namespace Service.BitGo.SignTransaction
 
             var result = configuration.Get<SettingsModel>();
 
-            if (result.GetPassphraseByWalletId("Default") == string.Empty)
+            var pass = result.GetPassphraseByWalletId("Default");
+
+            if (pass == string.Empty)
             {
                 Console.WriteLine("Please set Env Variable BitgoWalletPassphrase__Default with default pass phase for wallets");
                 throw new Exception("Please set Env Variable BitgoWalletPassphrase with pass phase for wallets and add 'Default' pass");

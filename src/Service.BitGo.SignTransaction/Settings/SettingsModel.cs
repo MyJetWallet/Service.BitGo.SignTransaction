@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using SimpleTrading.SettingsReader;
 
 namespace Service.BitGo.SignTransaction.Settings
@@ -23,12 +25,12 @@ namespace Service.BitGo.SignTransaction.Settings
 
             if (BitgoWalletPassphrase.TryGetValue(walletId, out var pass))
             {
-                return pass;
+                return Encoding.UTF8.GetString(Convert.FromBase64String(pass)).Trim();
             }
 
             if (BitgoWalletPassphrase.TryGetValue("Default", out pass))
             {
-                return pass;
+                return Encoding.UTF8.GetString(Convert.FromBase64String(pass)).Trim();
             }
 
             return string.Empty;
