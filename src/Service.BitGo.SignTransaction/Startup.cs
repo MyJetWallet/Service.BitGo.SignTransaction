@@ -48,6 +48,7 @@ namespace Service.BitGo.SignTransaction
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapGrpcSchema<PublishTransactionService, IPublishTransactionService>();
+                endpoints.MapGrpcSchema<SessionUnlockService, ISessionUnlockService>();
 
                 endpoints.MapGrpcSchemaRegistry();
 

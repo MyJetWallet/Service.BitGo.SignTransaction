@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.BitGo;
 using Newtonsoft.Json;
+using Service.BitGo.SignTransaction.Domain.Models;
 using Service.BitGo.SignTransaction.Grpc;
 using Service.BitGo.SignTransaction.Grpc.Models;
 
@@ -12,19 +14,22 @@ namespace Service.BitGo.SignTransaction.Services
     {
         private readonly ILogger<PublishTransactionService> _logger;
         private readonly IBitGoClient _bitGoClient;
+        private readonly IPublisher<SignalBitGoSessionStateUpdate> _sessionPublisher;
 
-        public PublishTransactionService(ILogger<PublishTransactionService> logger, IBitGoClient bitGoClient)
+        public PublishTransactionService(ILogger<PublishTransactionService> logger, IBitGoClient bitGoClient,
+            IPublisher<SignalBitGoSessionStateUpdate> sessionPublisher)
         {
             _logger = logger;
             _bitGoClient = bitGoClient;
+            _sessionPublisher = sessionPublisher;
         }
 
         public async Task<SendTransactionResponse> SignAndSendTransactionAsync(SendTransactionRequest request)
         {
+            _logger.LogInformation("Transfer Request: {jsonText}", JsonConvert.SerializeObject(request));
+
             try
             {
-                _logger.LogInformation("Transfer Request: {jsonText}", JsonConvert.SerializeObject(request));
-
                 var pass = Program.Settings.GetPassphraseByWalletId(request.BitgoWalletId);
 
                 if (string.IsNullOrEmpty(pass))
@@ -36,29 +41,51 @@ namespace Service.BitGo.SignTransaction.Services
                     pass, request.SequenceId,
                     request.Amount, request.Address);
 
-                
-                if (!result.Success && result.Error.Code == "DuplicateSequenceIdError")
+
+                if (!result.Success)
                 {
-                    var transaction = await _bitGoClient.GetTransferBySequenceIdAsync(request.BitgoCoin, request.BitgoWalletId, request.SequenceId);
-                    
-                    if (!transaction.Success || transaction.Data == null)
+                    if (result.Error.Code == "DuplicateSequenceIdError")
                     {
-                        _logger.LogError("Transfer is Duplicate, but cannot found transaction: {jsonText}", JsonConvert.SerializeObject(transaction.Error));
+                        var transaction = await _bitGoClient.GetTransferBySequenceIdAsync(request.BitgoCoin,
+                            request.BitgoWalletId, request.SequenceId);
+
+                        if (!transaction.Success || transaction.Data == null)
+                        {
+                            _logger.LogError("Transfer is Duplicate, but cannot found transaction: {jsonText}",
+                                JsonConvert.SerializeObject(transaction.Error));
+
+                            return new SendTransactionResponse()
+                            {
+                                Error = result.Error
+                            };
+                        }
+
+                        _logger.LogInformation("Transfer is Duplicate, Result: {jsonText}",
+                            JsonConvert.SerializeObject(transaction.Data));
 
                         return new SendTransactionResponse()
                         {
-                            Error = result.Error
+                            DuplicateTransaction = transaction.Data
                         };
                     }
 
-                    _logger.LogInformation("Transfer is Duplicate, Result: {jsonText}", JsonConvert.SerializeObject(transaction.Data));
-
-                    return new SendTransactionResponse()
+                    if (result.Error.Code == "needs unlock")
                     {
-                        DuplicateTransaction = transaction.Data
-                    };
+                        await _sessionPublisher.PublishAsync(new SignalBitGoSessionStateUpdate()
+                        {
+                            State = BitGoSessionState.Locked
+                        });
+                        return new SendTransactionResponse()
+                        {
+                            Error =
+                            {
+                                Code = "needs unlock",
+                                ErrorMessage = "Session is locked"
+                            }
+                        };
+                    }
                 }
-                
+
                 if (!result.Success)
                 {
                     _logger.LogError("Transfer Result: {jsonText}", JsonConvert.SerializeObject(result.Error));
@@ -76,7 +103,8 @@ namespace Service.BitGo.SignTransaction.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Transfer Request ERROR: {jsonText}. Error: {message}", JsonConvert.SerializeObject(request), ex.Message);
+                _logger.LogError(ex, "Transfer Request ERROR: {jsonText}. Error: {message}",
+                    JsonConvert.SerializeObject(request), ex.Message);
                 throw;
             }
         }

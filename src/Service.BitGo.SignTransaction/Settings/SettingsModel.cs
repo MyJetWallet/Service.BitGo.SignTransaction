@@ -10,6 +10,8 @@ namespace Service.BitGo.SignTransaction.Settings
     {
         public string SeqServiceUrl { get; set; }
 
+        public string SpotServiceBusHostPort { get; set; }
+
         public string BitgoApiKey { get; set; }
 
         public string BitgoApiUrl { get; set; }
