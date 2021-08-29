@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using MyJetWallet.BitGo;
 using MyJetWallet.Sdk.Service;
 using MyServiceBus.TcpClient;
+using Service.BitGo.SignTransaction.Domain.Models;
 using Service.BitGo.SignTransaction.Services;
 
 // ReSharper disable TemplateIsNotCompileTimeConstantProblem
@@ -37,7 +38,7 @@ namespace Service.BitGo.SignTransaction.Modules
 
             builder
                 .RegisterInstance(new SignalBitGoSessionUpdateBusPublisher(serviceBusClient))
-                .As<IPublisher<SignalBitGoSessionUpdateBusPublisher>>()
+                .As<IPublisher<SignalBitGoSessionStateUpdate>>()
                 .AutoActivate()
                 .SingleInstance();
 
