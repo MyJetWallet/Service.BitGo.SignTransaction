@@ -2,6 +2,7 @@
 
 namespace Service.BitGo.SignTransaction.Grpc.Models
 {
+    [DataContract]
     public class UnlockSessionRequest
     {
         [DataMember(Order = 1)] public int Duration { get; set; }
