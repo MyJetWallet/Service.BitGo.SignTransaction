@@ -2,6 +2,7 @@
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
+using MyNoSqlServer.DataReader;
 using MyServiceBus.TcpClient;
 using Service.BitGo.SignTransaction.Domain.Models;
 using Service.BitGo.SignTransaction.Services;
@@ -16,6 +17,16 @@ namespace Service.BitGo.SignTransaction.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
+            var myNoSqlClient = new MyNoSqlTcpClient(
+                Program.ReloadedSettings(e => e.MyNoSqlWriterUrl),
+                ApplicationEnvironment.HostName ??
+                $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
+
+            builder
+                .RegisterInstance(myNoSqlClient)
+                .AsSelf()
+                .SingleInstance();
+
             ServiceBusLogger = Program.LogFactory.CreateLogger(nameof(MyServiceBusTcpClient));
 
             var serviceBusClient = new MyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort),
@@ -37,7 +48,6 @@ namespace Service.BitGo.SignTransaction.Modules
                 .As<IPublisher<SignalBitGoSessionStateUpdate>>()
                 .AutoActivate()
                 .SingleInstance();
-
 
             builder
                 .RegisterInstance(new SymmetricEncryptionService(Program.EnvSettings.GetEncryptionKey()))

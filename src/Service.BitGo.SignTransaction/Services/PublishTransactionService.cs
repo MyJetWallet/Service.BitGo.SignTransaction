@@ -36,7 +36,7 @@ namespace Service.BitGo.SignTransaction.Services
             _myNoSqlServerWalletDataReader = myNoSqlServerWalletDataReader;
             _encryptionService = encryptionService;
 
-            _bitGoClient = new BitGoClient(null, Program.Settings.BitgoApiUrl);
+            _bitGoClient = new BitGoClient(null, Program.Settings.BitgoExpressUrl);
             _bitGoClient.ThrowThenErrorResponse = false;
         }
 
