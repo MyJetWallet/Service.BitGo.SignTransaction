@@ -28,6 +28,22 @@ namespace Service.BitGo.SignTransaction.Client
             builder.RegisterInstance(factory.GetSessionUnlockService()).As<ISessionUnlockService>().SingleInstance();
         }
 
+        public static void RegisterBitGoUsersClient(this ContainerBuilder builder,
+            string registerBitGoUsersGrpcServiceUrl)
+        {
+            var factory = new BitGoUsersClientFactory(registerBitGoUsersGrpcServiceUrl);
+
+            builder.RegisterInstance(factory.GetBitGoUsersService()).As<IBitGoUsersService>().SingleInstance();
+        }
+
+        public static void RegisterBitGoWalletsClient(this ContainerBuilder builder,
+            string registerBitGoWalletsGrpcServiceUrl)
+        {
+            var factory = new BitGoWalletsClientFactory(registerBitGoWalletsGrpcServiceUrl);
+
+            builder.RegisterInstance(factory.GetBitGoWalletsService()).As<IBitGoWalletsService>().SingleInstance();
+        }
+
         public static void RegisterSignalBitGoSessionStateUpdateSubscriber(this ContainerBuilder builder,
             MyServiceBusTcpClient client,
             string queueName,
