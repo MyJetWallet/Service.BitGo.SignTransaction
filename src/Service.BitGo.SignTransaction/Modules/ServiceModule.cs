@@ -37,6 +37,13 @@ namespace Service.BitGo.SignTransaction.Modules
                 .As<IPublisher<SignalBitGoSessionStateUpdate>>()
                 .AutoActivate()
                 .SingleInstance();
+
+
+            builder
+                .RegisterInstance(new SymmetricEncryptionService(Program.EnvSettings.GetEncryptionKey()))
+                .AsSelf()
+                .AutoActivate()
+                .SingleInstance();
         }
     }
 }
