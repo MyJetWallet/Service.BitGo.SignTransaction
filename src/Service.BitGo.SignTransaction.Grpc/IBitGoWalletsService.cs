@@ -9,7 +9,7 @@ namespace Service.BitGo.SignTransaction.Grpc
     public interface IBitGoWalletsService
     {
         [OperationContract]
-        Task<BitGoWalletsList> GetBitGoWalletsList(GetBitGoWalletsRequest request);
+        Task<BitGoWalletsList> GetBitGoWalletsList();
 
         [OperationContract]
         Task<BitGoWallet> GetBitGoWallet(GetBitGoWalletRequest request);

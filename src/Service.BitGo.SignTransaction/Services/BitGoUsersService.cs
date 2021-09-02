@@ -29,11 +29,11 @@ namespace Service.BitGo.SignTransaction.Services
             _encryptionService = encryptionService;
         }
 
-        public async Task<BitGoUsersList> GetBitGoUsersList(GetBitGoUsersRequest request)
+        public async Task<BitGoUsersList> GetBitGoUsersList()
         {
             return new BitGoUsersList()
             {
-                Users = (await _writer.GetAsync(BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId)))
+                Users = (await _writer.GetAsync())
                     .Select(e =>
                     {
                         e.User.ApiKey = "***";

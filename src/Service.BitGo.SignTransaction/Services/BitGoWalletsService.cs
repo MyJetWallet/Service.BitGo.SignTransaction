@@ -29,11 +29,11 @@ namespace Service.BitGo.SignTransaction.Services
             _encryptionService = encryptionService;
         }
 
-        public async Task<BitGoWalletsList> GetBitGoWalletsList(GetBitGoWalletsRequest request)
+        public async Task<BitGoWalletsList> GetBitGoWalletsList()
         {
             return new BitGoWalletsList()
             {
-                Wallets = (await _writer.GetAsync(BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId)))
+                Wallets = (await _writer.GetAsync())
                     .Select(e =>
                     {
                         e.Wallet.ApiKey = "***";

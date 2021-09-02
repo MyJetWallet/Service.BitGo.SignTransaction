@@ -9,7 +9,7 @@ namespace Service.BitGo.SignTransaction.Grpc
     public interface IBitGoUsersService
     {
         [OperationContract]
-        Task<BitGoUsersList> GetBitGoUsersList(GetBitGoUsersRequest request);
+        Task<BitGoUsersList> GetBitGoUsersList();
 
         [OperationContract]
         Task<BitGoUser> GetBitGoUser(GetBitGoUserRequest request);
