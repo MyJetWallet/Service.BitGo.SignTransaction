@@ -2,9 +2,11 @@
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
+using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
 using MyServiceBus.TcpClient;
 using Service.BitGo.SignTransaction.Domain.Models;
+using Service.BitGo.SignTransaction.Domain.Models.NoSql;
 using Service.BitGo.SignTransaction.Services;
 
 // ReSharper disable TemplateIsNotCompileTimeConstantProblem
@@ -18,13 +20,25 @@ namespace Service.BitGo.SignTransaction.Modules
         protected override void Load(ContainerBuilder builder)
         {
             var myNoSqlClient = new MyNoSqlTcpClient(
-                Program.ReloadedSettings(e => e.MyNoSqlWriterUrl),
+                Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort),
                 ApplicationEnvironment.HostName ??
                 $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
 
             builder
                 .RegisterInstance(myNoSqlClient)
                 .AsSelf()
+                .SingleInstance();
+
+            builder
+                .RegisterInstance(
+                    new MyNoSqlReadRepository<BitGoWalletNoSqlEntity>(myNoSqlClient, BitGoWalletNoSqlEntity.TableName))
+                .As<IMyNoSqlServerDataReader<BitGoWalletNoSqlEntity>>()
+                .SingleInstance();
+
+            builder
+                .RegisterInstance(
+                    new MyNoSqlReadRepository<BitGoUserNoSqlEntity>(myNoSqlClient, BitGoUserNoSqlEntity.TableName))
+                .As<IMyNoSqlServerDataReader<BitGoUserNoSqlEntity>>()
                 .SingleInstance();
 
             ServiceBusLogger = Program.LogFactory.CreateLogger(nameof(MyServiceBusTcpClient));

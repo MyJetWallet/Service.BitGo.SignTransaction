@@ -1,7 +1,7 @@
-﻿using System;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using ProtoBuf.Grpc.Client;
+using Service.BitGo.SignTransaction.Client;
+using Service.BitGo.SignTransaction.Grpc.Models;
 
 namespace TestApp
 {
@@ -10,12 +10,12 @@ namespace TestApp
         static async Task Main(string[] args)
         {
             GrpcClientFactory.AllowUnencryptedHttp2 = true;
+            var factory = new BitGoUnlockSessionClientFactory("http://localhost:99");
+            var client = factory.GetSessionUnlockService();
+            await client.UnlockSessionAsync(new UnlockSessionRequest());
 
             // Console.Write("Press enter to start");
             // Console.ReadLine();
-
-            Console.WriteLine(Convert.ToBase64String(Encoding.ASCII.GetBytes("1q2waaAA1q2wasd!")));
-            Console.WriteLine(Convert.ToBase64String(Encoding.ASCII.GetBytes("Addda!1231!!!2$$3")));
 
             //
             //
