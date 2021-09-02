@@ -67,6 +67,7 @@ namespace Service.BitGo.SignTransaction
         {
             builder.RegisterModule<SettingsModule>();
             builder.RegisterModule<ServiceModule>();
+            builder.RegisterModule<MyNoSqlModule>();
         }
     }
 }
