@@ -13,7 +13,8 @@ namespace Service.BitGo.SignTransaction.Grpc.Models
         [DataMember(Order = 4)] public string Address { get; set; }
         [DataMember(Order = 5)] public string Amount { get; set; }
         [DataMember(Order = 6)] public string SequenceId { get; set; }
-        
+        [DataMember(Order = 7)] public string BrokerId { get; set; }
+
         [DataContract]
         public class AgentInfo
         {
@@ -24,7 +25,8 @@ namespace Service.BitGo.SignTransaction.Grpc.Models
             {
                 if (string.IsNullOrEmpty(AppName))
                 {
-                    AppName = Environment.GetEnvironmentVariable("APP_VERSION") ?? Assembly.GetEntryAssembly()?.GetName().Name ?? "none";
+                    AppName = Environment.GetEnvironmentVariable("APP_VERSION") ??
+                              Assembly.GetEntryAssembly()?.GetName().Name ?? "none";
                     AppEnvInfo = Environment.GetEnvironmentVariable("ENV_INFO");
                 }
 

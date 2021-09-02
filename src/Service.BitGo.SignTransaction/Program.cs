@@ -1,22 +1,23 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using System;
+﻿using System;
 using System.Net;
-using System.Xml;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
+using MySettingsReader;
 using Service.BitGo.SignTransaction.Settings;
-using SimpleTrading.SettingsReader;
 
 namespace Service.BitGo.SignTransaction
 {
     public class Program
     {
+        public const string SettingsFileName = ".myjetwallet";
         public static SettingsModel Settings { get; private set; }
+        public static EnvSettingsModel EnvSettings { get; private set; }
 
         public static ILoggerFactory LogFactory { get; private set; }
 
@@ -34,7 +35,8 @@ namespace Service.BitGo.SignTransaction
         {
             Console.Title = "MyJetWallet Service.BitGo.SignTransaction";
 
-            Settings = ReaderSettings();
+            EnvSettings = EnvReaderSettings();
+            Settings = SettingsReader.GetSettings<SettingsModel>(SettingsFileName);
 
             using var loggerFactory = LogConfigurator.Configure("MyJetWallet", Settings.SeqServiceUrl);
 
@@ -56,33 +58,19 @@ namespace Service.BitGo.SignTransaction
             }
         }
 
-        private static SettingsModel ReaderSettings()
+        private static EnvSettingsModel EnvReaderSettings()
         {
             var builder = new ConfigurationBuilder()
                 .AddEnvironmentVariables();
 
             var configuration = builder.Build();
 
-            var result = configuration.Get<SettingsModel>();
+            var result = configuration.Get<EnvSettingsModel>();
 
-            var pass = result.GetPassphraseByWalletId("Default");
-
-            if (pass == string.Empty)
+            if (string.IsNullOrEmpty(result.EncryptionKey))
             {
-                Console.WriteLine("Please set Env Variable BitgoWalletPassphrase__Default with default pass phase for wallets");
-                throw new Exception("Please set Env Variable BitgoWalletPassphrase with pass phase for wallets and add 'Default' pass");
-            }
-
-            if (string.IsNullOrEmpty(result.BitgoApiKey))
-            {
-                Console.WriteLine("Please set Env Variable BitgoApiKey");
-                throw new Exception("Please set Env Variable BitgoApiKey");
-            }
-
-            if (string.IsNullOrEmpty(result.BitgoApiUrl))
-            {
-                Console.WriteLine("Please set Env Variable BitgoApiUrl");
-                throw new Exception("Please set Env Variable BitgoApiUrl");
+                Console.WriteLine("Please set Env Variable EncryptionKey");
+                throw new Exception("Please set Env Variable EncryptionKey");
             }
 
             return result;

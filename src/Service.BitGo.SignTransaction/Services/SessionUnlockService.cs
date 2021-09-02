@@ -3,8 +3,10 @@ using System.Threading.Tasks;
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.BitGo;
+using MyNoSqlServer.Abstractions;
 using Newtonsoft.Json;
 using Service.BitGo.SignTransaction.Domain.Models;
+using Service.BitGo.SignTransaction.Domain.Models.NoSql;
 using Service.BitGo.SignTransaction.Grpc;
 using Service.BitGo.SignTransaction.Grpc.Models;
 
@@ -15,15 +17,24 @@ namespace Service.BitGo.SignTransaction.Services
     public class SessionUnlockService : ISessionUnlockService
     {
         private readonly ILogger<SessionUnlockService> _logger;
-        private readonly IBitGoClient _bitGoClient;
         private readonly IPublisher<SignalBitGoSessionStateUpdate> _sessionPublisher;
+        private readonly SymmetricEncryptionService _encryptionService;
+        private readonly IMyNoSqlServerDataReader<BitGoUserNoSqlEntity> _myNoSqlServerUserDataReader;
 
-        public SessionUnlockService(ILogger<SessionUnlockService> logger, IBitGoClient bitGoClient,
-            IPublisher<SignalBitGoSessionStateUpdate> sessionPublisher)
+        private readonly BitGoClient _bitGoClient;
+
+        public SessionUnlockService(ILogger<SessionUnlockService> logger,
+            IPublisher<SignalBitGoSessionStateUpdate> sessionPublisher,
+            IMyNoSqlServerDataReader<BitGoUserNoSqlEntity> myNoSqlServerUserDataReader,
+            SymmetricEncryptionService encryptionService)
         {
             _logger = logger;
-            _bitGoClient = bitGoClient;
             _sessionPublisher = sessionPublisher;
+            _myNoSqlServerUserDataReader = myNoSqlServerUserDataReader;
+            _encryptionService = encryptionService;
+
+            _bitGoClient = new BitGoClient(null, Program.Settings.BitgoApiUrl);
+            _bitGoClient.ThrowThenErrorResponse = false;
         }
 
         public async Task<UnlockSessionResponse> UnlockSessionAsync(UnlockSessionRequest request)
@@ -31,6 +42,19 @@ namespace Service.BitGo.SignTransaction.Services
             _logger.LogInformation($"Session unlock request from: {request.UpdatedBy}");
             try
             {
+                var bitGoUser = _myNoSqlServerUserDataReader.Get(
+                    BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+                    BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId));
+                if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
+                {
+                    _logger.LogError("Tech account is not configured, id = {techSignerName}",
+                        BitGoUserNoSqlEntity.TechSignerId);
+                    throw new Exception($"Tech account is not configured, id = {BitGoUserNoSqlEntity.TechSignerId}");
+                }
+
+                var apiKey = _encryptionService.Decrypt(bitGoUser.User.ApiKey);
+                _bitGoClient.SetAccessToken(apiKey);
+
                 var result = await _bitGoClient.UnlockSessionAsync(request.Otp, request.Duration);
                 if (!result.Success)
                 {
@@ -40,8 +64,9 @@ namespace Service.BitGo.SignTransaction.Services
                         Error = result.Error
                     };
                 }
+
                 _logger.LogInformation("Session unlocked");
-                
+
                 await _sessionPublisher.PublishAsync(new SignalBitGoSessionStateUpdate()
                 {
                     State = BitGoSessionState.Unlocked,

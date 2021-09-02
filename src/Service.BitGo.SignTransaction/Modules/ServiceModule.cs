@@ -1,7 +1,6 @@
 ﻿using Autofac;
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
-using MyJetWallet.BitGo;
 using MyJetWallet.Sdk.Service;
 using MyServiceBus.TcpClient;
 using Service.BitGo.SignTransaction.Domain.Models;
@@ -17,9 +16,6 @@ namespace Service.BitGo.SignTransaction.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            var bitgoClient = new BitGoClient(Program.Settings.BitgoApiKey, Program.Settings.BitgoApiUrl);
-            bitgoClient.ThrowThenErrorResponse = false;
-
             ServiceBusLogger = Program.LogFactory.CreateLogger(nameof(MyServiceBusTcpClient));
 
             var serviceBusClient = new MyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort),
@@ -40,11 +36,6 @@ namespace Service.BitGo.SignTransaction.Modules
                 .RegisterInstance(new SignalBitGoSessionUpdateBusPublisher(serviceBusClient))
                 .As<IPublisher<SignalBitGoSessionStateUpdate>>()
                 .AutoActivate()
-                .SingleInstance();
-
-            builder
-                .RegisterInstance(bitgoClient)
-                .As<IBitGoClient>()
                 .SingleInstance();
         }
     }

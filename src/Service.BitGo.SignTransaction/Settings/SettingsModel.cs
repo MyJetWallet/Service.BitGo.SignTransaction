@@ -1,41 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using SimpleTrading.SettingsReader;
+﻿using MyYamlParser;
 
 namespace Service.BitGo.SignTransaction.Settings
 {
-    [YamlAttributesOnly]
     public class SettingsModel
     {
+        [YamlProperty("BitGoSignTransaction.SeqServiceUrl")]
         public string SeqServiceUrl { get; set; }
 
+        [YamlProperty("BitGoSignTransaction.SpotServiceBusHostPort")]
         public string SpotServiceBusHostPort { get; set; }
 
-        public string BitgoApiKey { get; set; }
+        [YamlProperty("BitGoSignTransaction.MyNoSqlWriterUrl")]
+        public string MyNoSqlWriterUrl { get; set; }
 
+        [YamlProperty("BitGoSignTransaction.BitgoApiUrl")]
         public string BitgoApiUrl { get; set; }
-
-        public Dictionary<string, string> BitgoWalletPassphrase { get; set; }
-
-        public string GetPassphraseByWalletId(string walletId)
-        {
-            if (BitgoWalletPassphrase == null)
-            {
-                return string.Empty;
-            }
-
-            if (BitgoWalletPassphrase.TryGetValue(walletId, out var pass))
-            {
-                return Encoding.UTF8.GetString(Convert.FromBase64String(pass)).Trim();
-            }
-
-            if (BitgoWalletPassphrase.TryGetValue("Default", out pass))
-            {
-                return Encoding.UTF8.GetString(Convert.FromBase64String(pass)).Trim();
-            }
-
-            return string.Empty;
-        }
     }
 }

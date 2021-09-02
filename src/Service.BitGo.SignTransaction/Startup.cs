@@ -1,10 +1,10 @@
 ﻿using System.Reflection;
+using Autofac;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Autofac;
 using MyJetWallet.Sdk.GrpcMetrics;
 using MyJetWallet.Sdk.GrpcSchema;
 using Prometheus;
@@ -49,13 +49,17 @@ namespace Service.BitGo.SignTransaction
             {
                 endpoints.MapGrpcSchema<PublishTransactionService, IPublishTransactionService>();
                 endpoints.MapGrpcSchema<SessionUnlockService, ISessionUnlockService>();
+                endpoints.MapGrpcSchema<BitGoUsersService, IBitGoUsersService>();
+                endpoints.MapGrpcSchema<BitGoWalletsService, IBitGoWalletsService>();
 
                 endpoints.MapGrpcSchemaRegistry();
 
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync("Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-                });
+                endpoints.MapGet("/",
+                    async context =>
+                    {
+                        await context.Response.WriteAsync(
+                            "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+                    });
             });
         }
 
