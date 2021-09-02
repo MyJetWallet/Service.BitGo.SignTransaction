@@ -21,6 +21,7 @@ namespace Service.BitGo.SignTransaction.Client
             _channel = channel.Intercept(new PrometheusMetricsInterceptor());
         }
 
-        public IPublishTransactionService GetPublishTransactionService() => _channel.CreateGrpcService<IPublishTransactionService>();
+        public IPublishTransactionService GetPublishTransactionService() =>
+            _channel.CreateGrpcService<IPublishTransactionService>();
     }
 }

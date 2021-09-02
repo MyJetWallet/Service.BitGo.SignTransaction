@@ -34,14 +34,24 @@ namespace Service.BitGo.SignTransaction.Services
             return new BitGoUsersList()
             {
                 Users = (await _writer.GetAsync(BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId)))
-                    .Select(e => e.User).ToList()
+                    .Select(e =>
+                    {
+                        e.User.ApiKey = "***";
+                        return e.User;
+                    }).ToList()
             };
         }
 
         public async Task<BitGoUser> GetBitGoUser(GetBitGoUserRequest request)
         {
-            return (await _writer.GetAsync(BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+            var user = (await _writer.GetAsync(BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
                 BitGoUserNoSqlEntity.GenerateRowKey(request.UserId))).User;
+            if (user != null)
+            {
+                user.ApiKey = "***";
+            }
+
+            return user;
         }
 
         public async Task AddBitGoUser(BitGoUser user)

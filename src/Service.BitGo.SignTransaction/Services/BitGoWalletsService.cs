@@ -34,14 +34,24 @@ namespace Service.BitGo.SignTransaction.Services
             return new BitGoWalletsList()
             {
                 Wallets = (await _writer.GetAsync(BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId)))
-                    .Select(e => e.Wallet).ToList()
+                    .Select(e =>
+                    {
+                        e.Wallet.ApiKey = "***";
+                        return e.Wallet;
+                    }).ToList()
             };
         }
 
         public async Task<BitGoWallet> GetBitGoWallet(GetBitGoWalletRequest request)
         {
-            return (await _writer.GetAsync(BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+            var wallet = (await _writer.GetAsync(BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId),
                 BitGoWalletNoSqlEntity.GenerateRowKey(request.WalletId))).Wallet;
+            if (wallet != null)
+            {
+                wallet.ApiKey = "***";
+            }
+
+            return wallet;
         }
 
         public async Task AddBitGoWallet(BitGoWallet wallet)
