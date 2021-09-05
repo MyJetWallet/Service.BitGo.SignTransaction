@@ -51,6 +51,7 @@ namespace Service.BitGo.SignTransaction
                 endpoints.MapGrpcSchema<SessionUnlockService, ISessionUnlockService>();
                 endpoints.MapGrpcSchema<BitGoUsersService, IBitGoUsersService>();
                 endpoints.MapGrpcSchema<BitGoWalletsService, IBitGoWalletsService>();
+                endpoints.MapGrpcSchema<PendingApprovalsService, IPendingApprovalsService>();
 
                 endpoints.MapGrpcSchemaRegistry();
 

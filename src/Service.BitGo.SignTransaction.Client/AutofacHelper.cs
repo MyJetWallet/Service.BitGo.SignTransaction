@@ -44,6 +44,15 @@ namespace Service.BitGo.SignTransaction.Client
             builder.RegisterInstance(factory.GetBitGoWalletsService()).As<IBitGoWalletsService>().SingleInstance();
         }
 
+        public static void RegisterPendingApprovalsClient(this ContainerBuilder builder,
+            string registerBitGoPendingApprovalsGrpcServiceUrl)
+        {
+            var factory = new BitGoPendingApprovalClientFactory(registerBitGoPendingApprovalsGrpcServiceUrl);
+
+            builder.RegisterInstance(factory.GetPendingApprovalService()).As<IPendingApprovalsService>()
+                .SingleInstance();
+        }
+
         public static void RegisterSignalBitGoSessionStateUpdateSubscriber(this ContainerBuilder builder,
             MyServiceBusTcpClient client,
             string queueName,

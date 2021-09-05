@@ -9,7 +9,7 @@ namespace Service.BitGo.SignTransaction.Utils
     public class ApiKeyHiddenJsonConverter : JsonConverter
     {
         private readonly Type _type;
-        private readonly string[] _pinValues = { "ApiKey" };
+        private readonly string[] _pinValues = { "ApiKey", "Otp" };
 
         public ApiKeyHiddenJsonConverter(Type type)
         {
