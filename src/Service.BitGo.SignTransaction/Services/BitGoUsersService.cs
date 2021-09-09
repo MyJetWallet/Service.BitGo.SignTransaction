@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.BitGo;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.Abstractions;
 using Newtonsoft.Json;
@@ -21,12 +22,17 @@ namespace Service.BitGo.SignTransaction.Services
         private readonly IMyNoSqlServerDataWriter<BitGoUserNoSqlEntity> _writer;
         private readonly SymmetricEncryptionService _encryptionService;
 
+        private readonly BitGoClient _bitGoClient;
+
         public BitGoUsersService(ILogger<BitGoUsersService> logger,
             IMyNoSqlServerDataWriter<BitGoUserNoSqlEntity> writer, SymmetricEncryptionService encryptionService)
         {
             _logger = logger;
             _writer = writer;
             _encryptionService = encryptionService;
+
+            _bitGoClient = new BitGoClient(null, Program.Settings.BitgoExpressUrl);
+            _bitGoClient.ThrowThenErrorResponse = false;
         }
 
         public async Task<BitGoUsersList> GetBitGoUsersList()
@@ -57,11 +63,13 @@ namespace Service.BitGo.SignTransaction.Services
         public async Task AddBitGoUser(BitGoUser user)
         {
             using var action = MyTelemetry.StartActivity("Add BitGo user");
-            user.ApiKey = _encryptionService.Encrypt(user.ApiKey);
             try
             {
                 _logger.LogInformation("Add BitGoUser: {jsonText}",
                     JsonConvert.SerializeObject(user, new ApiKeyHiddenJsonConverter(typeof(BitGoUser))));
+
+                await SetUserId(user);
+                user.ApiKey = _encryptionService.Encrypt(user.ApiKey);
 
                 ValidateUser(user);
 
@@ -84,14 +92,30 @@ namespace Service.BitGo.SignTransaction.Services
             }
         }
 
+        private async Task SetUserId(BitGoUser user)
+        {
+            _bitGoClient.SetAccessToken(user.ApiKey);
+            var userDetails = await _bitGoClient.GetUserAsync("me");
+            if (!userDetails.Success)
+            {
+                _logger.LogError("Cannot add BitGo user: {requestJson}. Error: {error}",
+                    JsonConvert.SerializeObject(user, new ApiKeyHiddenJsonConverter(typeof(BitGoUser))),
+                    JsonConvert.SerializeObject(userDetails.Error));
+            }
+
+            user.BitGoId = userDetails.Data.User.UserId;
+        }
+
         public async Task UpdateBitGoUser(BitGoUser user)
         {
             using var action = MyTelemetry.StartActivity("Update BitGo user");
-            user.ApiKey = _encryptionService.Encrypt(user.ApiKey);
             try
             {
                 _logger.LogInformation("Update BitGoUser: {jsonText}",
                     JsonConvert.SerializeObject(user, new ApiKeyHiddenJsonConverter(typeof(BitGoUser))));
+
+                await SetUserId(user);
+                user.ApiKey = _encryptionService.Encrypt(user.ApiKey);
 
                 ValidateUser(user);
 
