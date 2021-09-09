@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.BitGo;
+using MyJetWallet.BitGo.Settings.Services;
 using MyNoSqlServer.Abstractions;
 using Newtonsoft.Json;
 using Service.BitGo.SignTransaction.Domain.Models;
@@ -17,23 +18,29 @@ namespace Service.BitGo.SignTransaction.Services
     public class PublishTransactionService : IPublishTransactionService
     {
         private readonly ILogger<PublishTransactionService> _logger;
+        private readonly IAssetMapper _assetMapper;
         private readonly IPublisher<SignalBitGoSessionStateUpdate> _sessionPublisher;
         private readonly IMyNoSqlServerDataReader<BitGoUserNoSqlEntity> _myNoSqlServerUserDataReader;
         private readonly IMyNoSqlServerDataReader<BitGoWalletNoSqlEntity> _myNoSqlServerWalletDataReader;
+        private readonly IMyNoSqlServerDataWriter<ApiKeyVolumeNoSqlEntity> _myNoSqlServerApiKeyDataWriter;
         private readonly SymmetricEncryptionService _encryptionService;
 
         private readonly BitGoClient _bitGoClient;
 
         public PublishTransactionService(ILogger<PublishTransactionService> logger,
+            IAssetMapper assetMapper,
             IPublisher<SignalBitGoSessionStateUpdate> sessionPublisher,
             IMyNoSqlServerDataReader<BitGoUserNoSqlEntity> myNoSqlServerUserDataReader,
             IMyNoSqlServerDataReader<BitGoWalletNoSqlEntity> myNoSqlServerWalletDataReader,
+            IMyNoSqlServerDataWriter<ApiKeyVolumeNoSqlEntity> myNoSqlServerApiKeyDataWriter,
             SymmetricEncryptionService encryptionService)
         {
             _logger = logger;
+            _assetMapper = assetMapper;
             _sessionPublisher = sessionPublisher;
             _myNoSqlServerUserDataReader = myNoSqlServerUserDataReader;
             _myNoSqlServerWalletDataReader = myNoSqlServerWalletDataReader;
+            _myNoSqlServerApiKeyDataWriter = myNoSqlServerApiKeyDataWriter;
             _encryptionService = encryptionService;
 
             _bitGoClient = new BitGoClient(null, Program.Settings.BitgoExpressUrl);
@@ -127,6 +134,10 @@ namespace Service.BitGo.SignTransaction.Services
                     };
                 }
 
+                await AddVolumeToApiKey(request.BrokerId, _encryptionService.GetSha256Hash(wallet.Wallet.ApiKey),
+                    request.BitgoCoin,
+                    _assetMapper.ConvertAmountFromBitgo(request.BitgoCoin, long.Parse(request.Amount)));
+
                 _logger.LogInformation("Transfer Result: {jsonText}", JsonConvert.SerializeObject(result.Data));
                 return new SendTransactionResponse()
                 {
@@ -138,6 +149,41 @@ namespace Service.BitGo.SignTransaction.Services
                 _logger.LogError(ex, "Transfer Request ERROR: {jsonText}. Error: {message}",
                     JsonConvert.SerializeObject(request), ex.Message);
                 throw;
+            }
+        }
+
+        private async Task AddVolumeToApiKey(string brokerId, string apiKey, string asset, double amount)
+        {
+            try
+            {
+                var existingEntity = await _myNoSqlServerApiKeyDataWriter.GetAsync(
+                    ApiKeyVolumeNoSqlEntity.GeneratePartitionKey(brokerId),
+                    ApiKeyVolumeNoSqlEntity.GenerateRowKey(apiKey, asset));
+
+                if (existingEntity == null)
+                {
+                    existingEntity = ApiKeyVolumeNoSqlEntity.Create(new ApiKeyVolume
+                    {
+                        BrokerId = brokerId,
+                        ApiKeyHash = apiKey,
+                        Asset = asset,
+                        Volume = amount,
+                        LastUpdateTime = DateTime.Now
+                    });
+                }
+                else
+                {
+                    existingEntity.Volume.Volume += amount;
+                    existingEntity.Volume.LastUpdateTime = DateTime.Now;
+                }
+
+                await _myNoSqlServerApiKeyDataWriter.InsertOrReplaceAsync(existingEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Unable to update accumulated volume for api key {apiKey}, asset {asset}, amount {amount}", apiKey,
+                    asset, amount);
             }
         }
     }

@@ -13,6 +13,9 @@ namespace Service.BitGo.SignTransaction.Modules
 
             builder.RegisterMyNoSqlWriter<BitGoWalletNoSqlEntity>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl),
                 BitGoWalletNoSqlEntity.TableName);
+
+            builder.RegisterMyNoSqlWriter<ApiKeyVolumeNoSqlEntity>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl),
+                ApiKeyVolumeNoSqlEntity.TableName);
         }
     }
 }

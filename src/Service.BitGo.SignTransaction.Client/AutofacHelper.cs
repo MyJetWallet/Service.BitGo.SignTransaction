@@ -1,8 +1,11 @@
 ﻿using Autofac;
 using DotNetCoreDecorators;
+using MyNoSqlServer.Abstractions;
+using MyNoSqlServer.DataReader;
 using MyServiceBus.Abstractions;
 using MyServiceBus.TcpClient;
 using Service.BitGo.SignTransaction.Domain.Models;
+using Service.BitGo.SignTransaction.Domain.Models.NoSql;
 using Service.BitGo.SignTransaction.Grpc;
 
 // ReSharper disable UnusedMember.Global
@@ -63,6 +66,17 @@ namespace Service.BitGo.SignTransaction.Client
             builder
                 .RegisterInstance(subs)
                 .As<ISubscriber<SignalBitGoSessionStateUpdate>>()
+                .SingleInstance();
+        }
+
+        public static void RegisterApiKeyVolumesClient(
+            this ContainerBuilder builder,
+            IMyNoSqlSubscriber myNoSqlSubscriber)
+        {
+            MyNoSqlReadRepository<ApiKeyVolumeNoSqlEntity> readRepository =
+                new MyNoSqlReadRepository<ApiKeyVolumeNoSqlEntity>(myNoSqlSubscriber,
+                    ApiKeyVolumeNoSqlEntity.TableName);
+            builder.RegisterInstance(readRepository).As<IMyNoSqlServerDataReader<ApiKeyVolumeNoSqlEntity>>()
                 .SingleInstance();
         }
     }

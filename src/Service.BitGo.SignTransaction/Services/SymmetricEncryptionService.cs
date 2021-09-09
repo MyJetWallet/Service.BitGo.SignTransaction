@@ -2,11 +2,13 @@
 using System.IO;
 using System.Text;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Paddings;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Utilities.Encoders;
 
 namespace Service.BitGo.SignTransaction.Services
 {
@@ -130,6 +132,16 @@ namespace Service.BitGo.SignTransaction.Services
             var result = new byte[length];
             Array.Copy(data, result, length);
             return result;
+        }
+
+        public string GetSha256Hash(string input)
+        {
+            var data = Encoding.UTF8.GetBytes(input);
+            var hash = new Sha256Digest();
+            hash.BlockUpdate(data, 0, data.Length);
+            var result = new byte[hash.GetDigestSize()];
+            hash.DoFinal(result, 0);
+            return Hex.ToHexString(result);
         }
     }
 }

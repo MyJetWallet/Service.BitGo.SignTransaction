@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.BitGo.Settings.Ioc;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
@@ -28,6 +29,8 @@ namespace Service.BitGo.SignTransaction.Modules
                 .RegisterInstance(myNoSqlClient)
                 .AsSelf()
                 .SingleInstance();
+
+            builder.RegisterBitgoSettingsReader(myNoSqlClient);
 
             builder
                 .RegisterInstance(
