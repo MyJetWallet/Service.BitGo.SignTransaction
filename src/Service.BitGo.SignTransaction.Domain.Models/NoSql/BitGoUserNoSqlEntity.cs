@@ -15,7 +15,7 @@ namespace Service.BitGo.SignTransaction.Domain.Models.NoSql
         public static string GeneratePartitionKey(string brokerId) => brokerId;
 
         public static string GenerateRowKey(string userId, string coinId) =>
-            $"{userId}:{(string.IsNullOrEmpty(coinId) ? coinId : DefaultCoin)}";
+            $"{userId}:{(string.IsNullOrEmpty(coinId) ? DefaultCoin : coinId)}";
 
         public BitGoUser User { get; set; }
 
