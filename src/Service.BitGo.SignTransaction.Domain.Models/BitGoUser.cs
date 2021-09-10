@@ -13,5 +13,6 @@ namespace Service.BitGo.SignTransaction.Domain.Models
         [DataMember(Order = 5)] public string ApiKey { get; set; }
         [DataMember(Order = 6)] public DateTime UpdatedDate { get; set; }
         [DataMember(Order = 7)] public string UpdatedBy { get; set; }
+        [DataMember(Order = 8)] public string CoinId { get; set; }
     }
 }

@@ -67,7 +67,15 @@ namespace Service.BitGo.SignTransaction.Services
 
                 var wallet = _myNoSqlServerWalletDataReader.Get(
                     BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                    BitGoWalletNoSqlEntity.GenerateRowKey(request.BitgoWalletId));
+                    BitGoWalletNoSqlEntity.GenerateRowKey(request.BitgoWalletId, request.BitgoCoin));
+                if (wallet == null)
+                {
+                    wallet = _myNoSqlServerWalletDataReader.Get(
+                        BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+                        BitGoWalletNoSqlEntity.GenerateRowKey(request.BitgoWalletId,
+                            BitGoWalletNoSqlEntity.DefaultCoin));
+                }
+
                 if (string.IsNullOrEmpty(wallet?.Wallet?.ApiKey))
                 {
                     _logger.LogError("Cannot find pass phase for wallet {bitgoWalletIdText}", request.BitgoWalletId);
