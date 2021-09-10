@@ -45,16 +45,13 @@ namespace Service.BitGo.SignTransaction.Services
             try
             {
                 var bitGoUser = _myNoSqlServerUserDataReader.Get(
-                    BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                    BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId, request.CoinId));
-
-                if (bitGoUser == null)
-                {
-                    _myNoSqlServerUserDataReader.Get(
-                        BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                        BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
-                            BitGoUserNoSqlEntity.DefaultCoin));
-                }
+                                    BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+                                    BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
+                                        request.CoinId)) ??
+                                _myNoSqlServerUserDataReader.Get(
+                                    BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+                                    BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
+                                        BitGoUserNoSqlEntity.DefaultCoin));
 
                 if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
                 {
