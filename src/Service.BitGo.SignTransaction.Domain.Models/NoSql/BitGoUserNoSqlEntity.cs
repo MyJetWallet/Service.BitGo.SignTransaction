@@ -10,8 +10,12 @@ namespace Service.BitGo.SignTransaction.Domain.Models.NoSql
 
         public const string TechPendingApprovalsViewerId = "TechPendingApprovalsViewer";
 
+        public const string DefaultCoin = "default";
+
         public static string GeneratePartitionKey(string brokerId) => brokerId;
-        public static string GenerateRowKey(string userId) => userId;
+
+        public static string GenerateRowKey(string userId, string coinId) =>
+            $"{userId}:{(string.IsNullOrEmpty(coinId) ? coinId : DefaultCoin)}";
 
         public BitGoUser User { get; set; }
 
@@ -20,7 +24,7 @@ namespace Service.BitGo.SignTransaction.Domain.Models.NoSql
             return new BitGoUserNoSqlEntity
             {
                 PartitionKey = GeneratePartitionKey(user.BrokerId),
-                RowKey = GenerateRowKey(user.Id),
+                RowKey = GenerateRowKey(user.Id, user.CoinId),
                 User = user
             };
         }

@@ -39,7 +39,7 @@ namespace Service.BitGo.SignTransaction.Services
 
             var bitGoUser = _myNoSqlServerUserDataReader.Get(
                 BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId));
+                BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId, request.CoinId));
             if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
             {
                 _logger.LogError("Tech account is not configured, id = {techSignerName}",
@@ -69,7 +69,7 @@ namespace Service.BitGo.SignTransaction.Services
 
             var bitGoUser = _myNoSqlServerUserDataReader.Get(
                 BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                BitGoUserNoSqlEntity.GenerateRowKey(request.UserId));
+                BitGoUserNoSqlEntity.GenerateRowKey(request.UserId, request.CoinId));
             if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
             {
                 _logger.LogError("BitGo user is not configured, id = {userId}",

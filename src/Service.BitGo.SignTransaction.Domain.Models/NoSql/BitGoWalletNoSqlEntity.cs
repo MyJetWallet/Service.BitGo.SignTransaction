@@ -6,12 +6,9 @@ namespace Service.BitGo.SignTransaction.Domain.Models.NoSql
     {
         public const string TableName = "myjetwallet-bitgo-wallets";
 
-        public const string DefaultCoin = "default";
-
         public static string GeneratePartitionKey(string brokerId) => brokerId;
 
-        public static string GenerateRowKey(string walletId, string coinId) =>
-            $"{walletId}:{(string.IsNullOrEmpty(coinId) ? coinId : DefaultCoin)}";
+        public static string GenerateRowKey(string walletId) => walletId;
 
         public BitGoWallet Wallet { get; set; }
 
@@ -20,7 +17,7 @@ namespace Service.BitGo.SignTransaction.Domain.Models.NoSql
             return new BitGoWalletNoSqlEntity
             {
                 PartitionKey = GeneratePartitionKey(wallet.BrokerId),
-                RowKey = GenerateRowKey(wallet.Id, wallet.CoinId),
+                RowKey = GenerateRowKey(wallet.Id),
                 Wallet = wallet
             };
         }

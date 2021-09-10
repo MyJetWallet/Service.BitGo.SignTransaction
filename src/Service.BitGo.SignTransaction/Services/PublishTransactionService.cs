@@ -55,7 +55,16 @@ namespace Service.BitGo.SignTransaction.Services
             {
                 var bitGoUser = _myNoSqlServerUserDataReader.Get(
                     BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                    BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId));
+                    BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId, request.BitgoCoin));
+
+                if (bitGoUser == null)
+                {
+                    _myNoSqlServerUserDataReader.Get(
+                        BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+                        BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
+                            BitGoUserNoSqlEntity.DefaultCoin));
+                }
+
                 if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
                 {
                     _logger.LogError("Tech account is not configured, id = {techSignerName}",
@@ -67,14 +76,7 @@ namespace Service.BitGo.SignTransaction.Services
 
                 var wallet = _myNoSqlServerWalletDataReader.Get(
                     BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                    BitGoWalletNoSqlEntity.GenerateRowKey(request.BitgoWalletId, request.BitgoCoin));
-                if (wallet == null)
-                {
-                    wallet = _myNoSqlServerWalletDataReader.Get(
-                        BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                        BitGoWalletNoSqlEntity.GenerateRowKey(request.BitgoWalletId,
-                            BitGoWalletNoSqlEntity.DefaultCoin));
-                }
+                    BitGoWalletNoSqlEntity.GenerateRowKey(request.BitgoWalletId));
 
                 if (string.IsNullOrEmpty(wallet?.Wallet?.ApiKey))
                 {

@@ -10,6 +10,8 @@ using Service.BitGo.SignTransaction.Domain.Models.NoSql;
 using Service.BitGo.SignTransaction.Grpc;
 using Service.BitGo.SignTransaction.Grpc.Models;
 
+// ReSharper disable InconsistentLogPropertyNaming
+
 // ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace Service.BitGo.SignTransaction.Services
@@ -44,7 +46,16 @@ namespace Service.BitGo.SignTransaction.Services
             {
                 var bitGoUser = _myNoSqlServerUserDataReader.Get(
                     BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                    BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId));
+                    BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId, request.CoinId));
+
+                if (bitGoUser == null)
+                {
+                    _myNoSqlServerUserDataReader.Get(
+                        BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+                        BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
+                            BitGoUserNoSqlEntity.DefaultCoin));
+                }
+
                 if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
                 {
                     _logger.LogError("Tech account is not configured, id = {techSignerName}",

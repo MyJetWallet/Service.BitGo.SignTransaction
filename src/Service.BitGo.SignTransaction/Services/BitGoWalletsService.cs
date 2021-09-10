@@ -45,7 +45,7 @@ namespace Service.BitGo.SignTransaction.Services
         public async Task<BitGoWallet> GetBitGoWallet(GetBitGoWalletRequest request)
         {
             var wallet = (await _writer.GetAsync(BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                BitGoWalletNoSqlEntity.GenerateRowKey(request.WalletId, request.CoinId))).Wallet;
+                BitGoWalletNoSqlEntity.GenerateRowKey(request.WalletId))).Wallet;
             if (wallet != null)
             {
                 wallet.ApiKey = "***";
@@ -124,7 +124,7 @@ namespace Service.BitGo.SignTransaction.Services
                     JsonConvert.SerializeObject(request));
 
                 var entity = await _writer.DeleteAsync(BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                    BitGoWalletNoSqlEntity.GenerateRowKey(request.WalletId, request.CoinId));
+                    BitGoWalletNoSqlEntity.GenerateRowKey(request.WalletId));
 
                 if (entity != null)
                     _logger.LogInformation("Removed BitGo wallet: {jsonText}",

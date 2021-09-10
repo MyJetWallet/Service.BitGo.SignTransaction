@@ -12,5 +12,6 @@ namespace Service.BitGo.SignTransaction.Grpc.Models
         [DataMember(Order = 4)] public string PendingApprovalId { get; set; }
         [DataMember(Order = 5)] public PendingApprovalUpdatedState State { get; set; }
         [DataMember(Order = 6)] public string UpdatedBy { get; set; }
+        [DataMember(Order = 7)] public string CoinId { get; set; }
     }
 }

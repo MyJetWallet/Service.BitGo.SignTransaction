@@ -51,7 +51,7 @@ namespace Service.BitGo.SignTransaction.Services
         public async Task<BitGoUser> GetBitGoUser(GetBitGoUserRequest request)
         {
             var user = (await _writer.GetAsync(BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                BitGoUserNoSqlEntity.GenerateRowKey(request.UserId))).User;
+                BitGoUserNoSqlEntity.GenerateRowKey(request.UserId, request.CoinId))).User;
             if (user != null)
             {
                 user.ApiKey = "***";
@@ -148,7 +148,7 @@ namespace Service.BitGo.SignTransaction.Services
                     JsonConvert.SerializeObject(request));
 
                 var entity = await _writer.DeleteAsync(BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                    BitGoUserNoSqlEntity.GenerateRowKey(request.UserId));
+                    BitGoUserNoSqlEntity.GenerateRowKey(request.UserId, request.CoinId));
 
                 if (entity != null)
                     _logger.LogInformation("Removed BitGo user: {jsonText}",
