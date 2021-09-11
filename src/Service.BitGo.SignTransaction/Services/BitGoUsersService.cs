@@ -114,6 +114,7 @@ namespace Service.BitGo.SignTransaction.Services
                 _logger.LogInformation("Update BitGoUser: {jsonText}",
                     JsonConvert.SerializeObject(user, new ApiKeyHiddenJsonConverter(typeof(BitGoUser))));
 
+                user.UpdatedDate = DateTime.Now;
                 await SetUserId(user);
                 user.ApiKey = _encryptionService.Encrypt(user.ApiKey);
 

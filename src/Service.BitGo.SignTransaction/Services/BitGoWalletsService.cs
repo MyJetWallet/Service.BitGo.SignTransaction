@@ -93,6 +93,7 @@ namespace Service.BitGo.SignTransaction.Services
                 _logger.LogInformation("Update BitGoWallet: {jsonText}",
                     JsonConvert.SerializeObject(wallet, new ApiKeyHiddenJsonConverter(typeof(BitGoWallet))));
 
+                wallet.UpdatedDate = DateTime.Now;
                 ValidateWallet(wallet);
 
                 var entity = BitGoWalletNoSqlEntity.Create(wallet);
