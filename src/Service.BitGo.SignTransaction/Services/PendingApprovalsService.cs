@@ -38,8 +38,13 @@ namespace Service.BitGo.SignTransaction.Services
             _logger.LogInformation("Get Pending Approval Details: {details}", JsonConvert.SerializeObject(request));
 
             var bitGoUser = _myNoSqlServerUserDataReader.Get(
-                BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId, request.CoinId));
+                                BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+                                BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
+                                    request.CoinId)) ??
+                            _myNoSqlServerUserDataReader.Get(
+                                BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+                                BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
+                                    BitGoUserNoSqlEntity.DefaultCoin));
             if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
             {
                 _logger.LogError("Tech account is not configured, id = {techSignerName}",
@@ -68,8 +73,13 @@ namespace Service.BitGo.SignTransaction.Services
                     new ApiKeyHiddenJsonConverter(typeof(UpdatePendingApprovalRequest))));
 
             var bitGoUser = _myNoSqlServerUserDataReader.Get(
-                BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                BitGoUserNoSqlEntity.GenerateRowKey(request.UserId, request.CoinId));
+                                BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+                                BitGoUserNoSqlEntity.GenerateRowKey(request.UserId,
+                                    request.CoinId)) ??
+                            _myNoSqlServerUserDataReader.Get(
+                                BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
+                                BitGoUserNoSqlEntity.GenerateRowKey(request.UserId,
+                                    BitGoUserNoSqlEntity.DefaultCoin));
             if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
             {
                 _logger.LogError("BitGo user is not configured, id = {userId}",
