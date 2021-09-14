@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ProtoBuf.Grpc.Client;
 using Service.BitGo.SignTransaction.Client;
 using Service.BitGo.SignTransaction.Grpc.Models;
@@ -9,10 +11,26 @@ namespace TestApp
     {
         static async Task Main(string[] args)
         {
+            // GrpcClientFactory.AllowUnencryptedHttp2 = true;
+            // var factory = new BitGoPendingApprovalClientFactory("http://bitgo-sign-transaction.spot-services.svc.cluster.local:80");
+            // var client = factory.GetPendingApprovalService();
+            // var approvalTask = await client.GetPendingApprovalDetails(new GetPendingApprovalRequest
+            //     { BrokerId = "jetwallet", PendingApprovalId = "61321dd4f9cf330006362c31f8cb076b" });
+            // Console.WriteLine(JsonConvert.SerializeObject(approvalTask));
+
             GrpcClientFactory.AllowUnencryptedHttp2 = true;
-            var factory = new BitGoUnlockSessionClientFactory("http://localhost:99");
+            var factory = new BitGoSpendingLimitsClientFactory("http://localhost:99");
             var client = factory.GetSessionUnlockService();
-            await client.UnlockSessionAsync(new UnlockSessionRequest());
+            var approvalTask = await client.GetSpendingLimitsAsync(new GetBitGoWalletLimitsRequest()
+                { BrokerId = "jetwallet", AssetId = "ETH" });
+            Console.WriteLine(JsonConvert.SerializeObject(approvalTask));
+
+            // var result = await client.UpdatePendingApproval(new UpdatePendingApprovalRequest()
+            // {
+            //     State = PendingApprovalUpdatedState.Approved, UserId = "krasdmi",
+            //     PendingApprovalId = "61321dd4f9cf330006362c31f8cb076b", BrokerId = "jetwallet", UpdatedBy = "krasdmi",
+            //     Otp = "772646"
+            // });
 
             // Console.Write("Press enter to start");
             // Console.ReadLine();

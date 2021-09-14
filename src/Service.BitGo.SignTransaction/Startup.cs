@@ -52,6 +52,7 @@ namespace Service.BitGo.SignTransaction
                 endpoints.MapGrpcSchema<BitGoUsersService, IBitGoUsersService>();
                 endpoints.MapGrpcSchema<BitGoWalletsService, IBitGoWalletsService>();
                 endpoints.MapGrpcSchema<PendingApprovalsService, IPendingApprovalsService>();
+                endpoints.MapGrpcSchema<SpendingLimitsService, ISpendingLimitsService>();
 
                 endpoints.MapGrpcSchemaRegistry();
 
