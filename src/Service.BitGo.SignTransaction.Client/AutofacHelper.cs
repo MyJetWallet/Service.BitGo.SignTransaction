@@ -56,6 +56,15 @@ namespace Service.BitGo.SignTransaction.Client
                 .SingleInstance();
         }
 
+        public static void RegisterSpendingLimitsClient(this ContainerBuilder builder,
+            string registerBitGoSpendingLimitsGrpcServiceUrl)
+        {
+            var factory = new BitGoSpendingLimitsClientFactory(registerBitGoSpendingLimitsGrpcServiceUrl);
+
+            builder.RegisterInstance(factory.GetSpendingLimitsService()).As<ISpendingLimitsService>()
+                .SingleInstance();
+        }
+
         public static void RegisterSignalBitGoSessionStateUpdateSubscriber(this ContainerBuilder builder,
             MyServiceBusTcpClient client,
             string queueName,

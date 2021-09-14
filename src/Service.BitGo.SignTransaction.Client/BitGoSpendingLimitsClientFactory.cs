@@ -21,6 +21,7 @@ namespace Service.BitGo.SignTransaction.Client
             _channel = channel.Intercept(new PrometheusMetricsInterceptor());
         }
 
-        public ISpendingLimitsService GetSessionUnlockService() => _channel.CreateGrpcService<ISpendingLimitsService>();
+        public ISpendingLimitsService GetSpendingLimitsService() =>
+            _channel.CreateGrpcService<ISpendingLimitsService>();
     }
 }
