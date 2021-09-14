@@ -20,7 +20,7 @@ namespace TestApp
 
             GrpcClientFactory.AllowUnencryptedHttp2 = true;
             var factory = new BitGoSpendingLimitsClientFactory("http://localhost:99");
-            var client = factory.GetSessionUnlockService();
+            var client = factory.GetSpendingLimitsService();
             var approvalTask = await client.GetSpendingLimitsAsync(new GetBitGoWalletLimitsRequest()
                 { BrokerId = "jetwallet", AssetId = "ETH" });
             Console.WriteLine(JsonConvert.SerializeObject(approvalTask));
