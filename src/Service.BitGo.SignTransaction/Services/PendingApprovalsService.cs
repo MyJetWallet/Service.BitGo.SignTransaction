@@ -19,44 +19,27 @@ namespace Service.BitGo.SignTransaction.Services
         private readonly IMyNoSqlServerDataReader<BitGoUserNoSqlEntity> _myNoSqlServerUserDataReader;
         private readonly SymmetricEncryptionService _encryptionService;
 
-        private readonly BitGoClient _bitGoClient;
+        private readonly IBitGoClientService _bitGoClientService;
 
         public PendingApprovalsService(ILogger<PendingApprovalsService> logger,
             IMyNoSqlServerDataReader<BitGoUserNoSqlEntity> myNoSqlServerUserDataReader,
-            SymmetricEncryptionService encryptionService)
+            SymmetricEncryptionService encryptionService, IBitGoClientService bitGoClientService)
         {
             _logger = logger;
             _myNoSqlServerUserDataReader = myNoSqlServerUserDataReader;
             _encryptionService = encryptionService;
-
-            _bitGoClient = new BitGoClient(null, Program.Settings.BitgoExpressUrl);
-            _bitGoClient.ThrowThenErrorResponse = false;
+            _bitGoClientService = bitGoClientService;
         }
 
         public async Task<PendingApprovalInfo> GetPendingApprovalDetails(GetPendingApprovalRequest request)
         {
             _logger.LogInformation("Get Pending Approval Details: {details}", JsonConvert.SerializeObject(request));
 
-            var bitGoUser = _myNoSqlServerUserDataReader.Get(
-                                BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                                BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
-                                    request.CoinId)) ??
-                            _myNoSqlServerUserDataReader.Get(
-                                BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                                BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
-                                    BitGoUserNoSqlEntity.DefaultCoin));
-            if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
-            {
-                _logger.LogError("Tech account is not configured, id = {techSignerName}",
-                    BitGoUserNoSqlEntity.TechSignerId);
-                return null;
-            }
-
-            var apiKey = _encryptionService.Decrypt(bitGoUser.User.ApiKey);
-            _bitGoClient.SetAccessToken(apiKey);
+            var client = _bitGoClientService.GetByUser(request.BrokerId, BitGoUserNoSqlEntity.TechSignerId, request.CoinId);
+            if (client == null) return null;
 
             var approvalResp =
-                await _bitGoClient.GetPendingApprovalAsync(request.PendingApprovalId);
+                await client.GetPendingApprovalAsync(request.PendingApprovalId);
             if (!approvalResp.Success)
             {
                 _logger.LogInformation("Unable to get Pending Approval Details: {error}",
@@ -72,27 +55,13 @@ namespace Service.BitGo.SignTransaction.Services
                 JsonConvert.SerializeObject(request,
                     new ApiKeyHiddenJsonConverter(typeof(UpdatePendingApprovalRequest))));
 
-            var bitGoUser = _myNoSqlServerUserDataReader.Get(
-                                BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                                BitGoUserNoSqlEntity.GenerateRowKey(request.UserId,
-                                    request.CoinId)) ??
-                            _myNoSqlServerUserDataReader.Get(
-                                BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                                BitGoUserNoSqlEntity.GenerateRowKey(request.UserId,
-                                    BitGoUserNoSqlEntity.DefaultCoin));
-            if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
-            {
-                _logger.LogError("BitGo user is not configured, id = {userId}",
-                    request.UserId);
-                return null;
-            }
-
-            var apiKey = _encryptionService.Decrypt(bitGoUser.User.ApiKey);
-            _bitGoClient.SetAccessToken(apiKey);
-
+            var client = _bitGoClientService.GetByUser(request.BrokerId, request.UserId, request.CoinId);
+            if (client == null) return null;
+            
             var approvalResp =
-                await _bitGoClient.UpdatePendingApprovalAsync(request.PendingApprovalId, request.Otp,
+                await client.UpdatePendingApprovalAsync(request.PendingApprovalId, request.Otp,
                     request.State.ToString().ToLower());
+            
             if (!approvalResp.Success)
             {
                 _logger.LogInformation("Unable to update Pending Approval: {error}",

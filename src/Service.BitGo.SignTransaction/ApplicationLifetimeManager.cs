@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.NoSql;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.DataReader;
 using MyServiceBus.TcpClient;
@@ -10,11 +11,13 @@ namespace Service.BitGo.SignTransaction
     {
         private readonly ILogger<ApplicationLifetimeManager> _logger;
         private readonly MyServiceBusTcpClient _busTcpClient;
-        private readonly MyNoSqlTcpClient _myNoSqlClient;
+        private readonly MyNoSqlClientLifeTime _myNoSqlClient;
 
-        public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime,
-            ILogger<ApplicationLifetimeManager> logger, MyServiceBusTcpClient busTcpClient,
-            MyNoSqlTcpClient myNoSqlClient) : base(appLifetime)
+        public ApplicationLifetimeManager(
+            IHostApplicationLifetime appLifetime,
+            ILogger<ApplicationLifetimeManager> logger, 
+            MyServiceBusTcpClient busTcpClient,
+            MyNoSqlClientLifeTime myNoSqlClient) : base(appLifetime)
         {
             _logger = logger;
             _busTcpClient = busTcpClient;

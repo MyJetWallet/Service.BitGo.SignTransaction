@@ -16,7 +16,10 @@ namespace Service.BitGo.SignTransaction.Settings
         [YamlProperty("BitGoSignTransaction.MyNoSqlReaderHostPort")]
         public string MyNoSqlReaderHostPort { get; set; }
 
-        [YamlProperty("BitGoSignTransaction.BitgoExpressUrl")]
-        public string BitgoExpressUrl { get; set; }
+        [YamlProperty("BitGoSignTransaction.BitgoExpressUrlMainNet")]
+        public string BitgoExpressUrlMainNet { get; set; }
+        
+        [YamlProperty("BitGoSignTransaction.BitgoExpressUrlTestNet")]
+        public string BitgoExpressUrlTestNet { get; set; }
     }
 }

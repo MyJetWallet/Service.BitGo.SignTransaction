@@ -2,7 +2,9 @@
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.BitGo.Settings.Ioc;
+using MyJetWallet.Sdk.NoSql;
 using MyJetWallet.Sdk.Service;
+using MyJetWallet.Sdk.ServiceBus;
 using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
 using MyServiceBus.TcpClient;
@@ -20,16 +22,9 @@ namespace Service.BitGo.SignTransaction.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            var myNoSqlClient = new MyNoSqlTcpClient(
-                Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort),
-                ApplicationEnvironment.HostName ??
-                $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
-
-            builder
-                .RegisterInstance(myNoSqlClient)
-                .AsSelf()
-                .SingleInstance();
-
+            var myNoSqlClient = builder
+                .CreateNoSqlClient(Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort));
+            
             builder.RegisterBitgoSettingsReader(myNoSqlClient);
 
             builder
@@ -45,32 +40,28 @@ namespace Service.BitGo.SignTransaction.Modules
                 .SingleInstance();
 
             ServiceBusLogger = Program.LogFactory.CreateLogger(nameof(MyServiceBusTcpClient));
-
-            var serviceBusClient = new MyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort),
-                ApplicationEnvironment.HostName ??
-                $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
-            serviceBusClient.Log.AddLogException(ex =>
-                ServiceBusLogger.LogInformation(ex, "Exception in MyServiceBusTcpClient"));
-            serviceBusClient.Log.AddLogInfo(info => ServiceBusLogger.LogDebug($"MyServiceBusTcpClient[info]: {info}"));
-            serviceBusClient.SocketLogs.AddLogInfo((context, msg) =>
-                ServiceBusLogger.LogInformation(
-                    $"MyServiceBusTcpClient[Socket {context?.Id}|{context?.ContextName}|{context?.Inited}][Info] {msg}"));
-            serviceBusClient.SocketLogs.AddLogException((context, exception) =>
-                ServiceBusLogger.LogInformation(exception,
-                    $"MyServiceBusTcpClient[Socket {context?.Id}|{context?.ContextName}|{context?.Inited}][Exception] {exception.Message}"));
-            builder.RegisterInstance(serviceBusClient).AsSelf().SingleInstance();
-
+            
+            var serviceBusClient = builder
+                .RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort),
+                ApplicationEnvironment.HostName ?? 
+                $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}",
+                Program.LogFactory);
+            
             builder
-                .RegisterInstance(new SignalBitGoSessionUpdateBusPublisher(serviceBusClient))
-                .As<IPublisher<SignalBitGoSessionStateUpdate>>()
-                .AutoActivate()
-                .SingleInstance();
+                .RegisterMyServiceBusPublisher<SignalBitGoSessionStateUpdate>(
+                    serviceBusClient, SignalBitGoSessionStateUpdate.ServiceBusTopicName, true);
 
             builder
                 .RegisterInstance(new SymmetricEncryptionService(Program.EnvSettings.GetEncryptionKey()))
                 .AsSelf()
                 .AutoActivate()
                 .SingleInstance();
+
+            builder
+                .RegisterType<BitGoClientService>()
+                .As<IBitGoClientService>()
+                .SingleInstance();
+            
         }
     }
 }

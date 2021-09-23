@@ -22,17 +22,16 @@ namespace Service.BitGo.SignTransaction.Services
         private readonly IMyNoSqlServerDataWriter<BitGoUserNoSqlEntity> _writer;
         private readonly SymmetricEncryptionService _encryptionService;
 
-        private readonly BitGoClient _bitGoClient;
+        private readonly IBitGoClientService _bitGoClientService;
 
         public BitGoUsersService(ILogger<BitGoUsersService> logger,
-            IMyNoSqlServerDataWriter<BitGoUserNoSqlEntity> writer, SymmetricEncryptionService encryptionService)
+            IMyNoSqlServerDataWriter<BitGoUserNoSqlEntity> writer,
+            IBitGoClientService bitGoClientService, SymmetricEncryptionService encryptionService)
         {
             _logger = logger;
             _writer = writer;
+            _bitGoClientService = bitGoClientService;
             _encryptionService = encryptionService;
-
-            _bitGoClient = new BitGoClient(null, Program.Settings.BitgoExpressUrl);
-            _bitGoClient.ThrowThenErrorResponse = false;
         }
 
         public async Task<BitGoUsersList> GetBitGoUsersList()
@@ -94,8 +93,8 @@ namespace Service.BitGo.SignTransaction.Services
 
         private async Task SetUserId(BitGoUser user)
         {
-            _bitGoClient.SetAccessToken(user.ApiKey);
-            var userDetails = await _bitGoClient.GetUserAsync("me");
+            var client = _bitGoClientService.GetByUser(user.BrokerId, user.Id, user.CoinId);
+            var userDetails = await client.GetUserAsync("me");
             if (!userDetails.Success)
             {
                 _logger.LogError("Cannot add BitGo user: {requestJson}. Error: {error}",
