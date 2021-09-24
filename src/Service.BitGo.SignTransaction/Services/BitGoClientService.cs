@@ -69,8 +69,9 @@ namespace Service.BitGo.SignTransaction.Services
             
             var apiKey = _encryptionService.Decrypt(bitGoUser.User.ApiKey);
 
-            var client = new BitGoClient(apiKey, apiKey,
-                Program.Settings.BitgoExpressUrlMainNet, Program.Settings.BitgoExpressUrlTestNet);
+            var client = new BitGoClient(
+                Program.Settings.BitgoExpressUrlMainNet, Program.Settings.BitgoExpressUrlTestNet,
+                apiKey, apiKey);
 
             lock (_clients)
             {
