@@ -20,31 +20,27 @@ namespace Service.BitGo.SignTransaction.Services
         private readonly ILogger<PublishTransactionService> _logger;
         private readonly IAssetMapper _assetMapper;
         private readonly IPublisher<SignalBitGoSessionStateUpdate> _sessionPublisher;
-        private readonly IMyNoSqlServerDataReader<BitGoUserNoSqlEntity> _myNoSqlServerUserDataReader;
         private readonly IMyNoSqlServerDataReader<BitGoWalletNoSqlEntity> _myNoSqlServerWalletDataReader;
         private readonly IMyNoSqlServerDataWriter<ApiKeyVolumeNoSqlEntity> _myNoSqlServerApiKeyDataWriter;
         private readonly SymmetricEncryptionService _encryptionService;
 
-        private readonly BitGoClient _bitGoClient;
+        private readonly IBitGoClientService _bitGoClientService;
 
         public PublishTransactionService(ILogger<PublishTransactionService> logger,
             IAssetMapper assetMapper,
             IPublisher<SignalBitGoSessionStateUpdate> sessionPublisher,
-            IMyNoSqlServerDataReader<BitGoUserNoSqlEntity> myNoSqlServerUserDataReader,
             IMyNoSqlServerDataReader<BitGoWalletNoSqlEntity> myNoSqlServerWalletDataReader,
             IMyNoSqlServerDataWriter<ApiKeyVolumeNoSqlEntity> myNoSqlServerApiKeyDataWriter,
-            SymmetricEncryptionService encryptionService)
+            SymmetricEncryptionService encryptionService, 
+            IBitGoClientService bitGoClientService)
         {
             _logger = logger;
             _assetMapper = assetMapper;
             _sessionPublisher = sessionPublisher;
-            _myNoSqlServerUserDataReader = myNoSqlServerUserDataReader;
             _myNoSqlServerWalletDataReader = myNoSqlServerWalletDataReader;
             _myNoSqlServerApiKeyDataWriter = myNoSqlServerApiKeyDataWriter;
             _encryptionService = encryptionService;
-
-            _bitGoClient = new BitGoClient(null, Program.Settings.BitgoExpressUrl);
-            _bitGoClient.ThrowThenErrorResponse = false;
+            _bitGoClientService = bitGoClientService;
         }
 
         public async Task<SendTransactionResponse> SignAndSendTransactionAsync(SendTransactionRequest request)
@@ -53,24 +49,12 @@ namespace Service.BitGo.SignTransaction.Services
 
             try
             {
-                var bitGoUser = _myNoSqlServerUserDataReader.Get(
-                                    BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                                    BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
-                                        request.BitgoCoin)) ??
-                                _myNoSqlServerUserDataReader.Get(
-                                    BitGoUserNoSqlEntity.GeneratePartitionKey(request.BrokerId),
-                                    BitGoUserNoSqlEntity.GenerateRowKey(BitGoUserNoSqlEntity.TechSignerId,
-                                        BitGoUserNoSqlEntity.DefaultCoin));
-
-                if (string.IsNullOrEmpty(bitGoUser?.User?.ApiKey))
+                var client = _bitGoClientService.GetByUser(request.BrokerId, BitGoUserNoSqlEntity.TechSignerId, request.BitgoCoin);
+                if (client == null)
                 {
-                    _logger.LogError("Tech account is not configured, id = {techSignerName}",
-                        BitGoUserNoSqlEntity.TechSignerId);
-                    throw new Exception($"Tech account is not configured, id = {BitGoUserNoSqlEntity.TechSignerId}");
+                    throw new Exception($"Tech account is not configured, id = {BitGoUserNoSqlEntity.TechSignerId}, coin = {request.BitgoCoin}");
                 }
-
-                var apiKey = _encryptionService.Decrypt(bitGoUser.User.ApiKey);
-
+                
                 var wallet = _myNoSqlServerWalletDataReader.Get(
                     BitGoWalletNoSqlEntity.GeneratePartitionKey(request.BrokerId),
                     BitGoWalletNoSqlEntity.GenerateRowKey(request.BitgoWalletId));
@@ -83,8 +67,7 @@ namespace Service.BitGo.SignTransaction.Services
 
                 var walletPass = _encryptionService.Decrypt(wallet.Wallet.ApiKey);
 
-                _bitGoClient.SetAccessToken(apiKey);
-                var result = await _bitGoClient.SendCoinsAsync(request.BitgoCoin, request.BitgoWalletId,
+                var result = await client.SendCoinsAsync(request.BitgoCoin, request.BitgoWalletId,
                     walletPass, request.SequenceId,
                     request.Amount, request.Address);
 
@@ -94,7 +77,7 @@ namespace Service.BitGo.SignTransaction.Services
                     {
                         case "DuplicateSequenceIdError":
                         {
-                            var transaction = await _bitGoClient.GetTransferBySequenceIdAsync(request.BitgoCoin,
+                            var transaction = await client.GetTransferBySequenceIdAsync(request.BitgoCoin,
                                 request.BitgoWalletId, request.SequenceId);
 
                             if (!transaction.Success || transaction.Data == null)

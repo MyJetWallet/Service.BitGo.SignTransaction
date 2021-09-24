@@ -16,18 +16,13 @@ namespace Service.BitGo.SignTransaction.Services
     public class PendingApprovalsService : IPendingApprovalsService
     {
         private readonly ILogger<PendingApprovalsService> _logger;
-        private readonly IMyNoSqlServerDataReader<BitGoUserNoSqlEntity> _myNoSqlServerUserDataReader;
-        private readonly SymmetricEncryptionService _encryptionService;
 
         private readonly IBitGoClientService _bitGoClientService;
 
         public PendingApprovalsService(ILogger<PendingApprovalsService> logger,
-            IMyNoSqlServerDataReader<BitGoUserNoSqlEntity> myNoSqlServerUserDataReader,
-            SymmetricEncryptionService encryptionService, IBitGoClientService bitGoClientService)
+            IBitGoClientService bitGoClientService)
         {
             _logger = logger;
-            _myNoSqlServerUserDataReader = myNoSqlServerUserDataReader;
-            _encryptionService = encryptionService;
             _bitGoClientService = bitGoClientService;
         }
 
