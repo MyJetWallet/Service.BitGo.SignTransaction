@@ -70,9 +70,9 @@ namespace Service.BitGo.SignTransaction.Services
             var apiKey = _encryptionService.Decrypt(bitGoUser.User.ApiKey);
 
             var client = new BitGoClient(
-                Program.Settings.BitgoExpressUrlMainNet, Program.Settings.BitgoExpressUrlTestNet,
-                apiKey, apiKey);
-
+                apiKey, Program.Settings.BitgoExpressUrlMainNet,
+                apiKey, Program.Settings.BitgoExpressUrlTestNet);
+            
             lock (_clients)
             {
                 _clients[apiKey] = coin.IsMainNet ? client.MainNet : client.TestNet;
